@@ -15,11 +15,14 @@ private:
     ~MotionIO();
 
     void BeginReceivingMotionUpdates();
+    void StopReceivingMotionUpdates();
+
+    void InvokeCallback(std::string);
 
     static Handle<Value> New(const Arguments&);
     static Persistent<Function> constructor;
 
-    Persistent<String> m_address;
+    std::string m_address;
     Persistent<Function> m_callback;
 };
 

@@ -1,0 +1,9 @@
+{
+  "name": "beagle-band",
+  "description": "Play music from your beagle",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "socket.io": "0.9"
+  }
+}
