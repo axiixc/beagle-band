@@ -46,35 +46,33 @@ Handle<Value> MotionIO::New(const Arguments& args)
 {
     HandleScope scope;
 
-    if (args.IsConstructCall())
-    {
-        if (args[0]->IsUndefined())
-        {
-             return ThrowException(Exception::TypeError(
-                String::New("Address cannot be undefined")));
-        }
-
-        if (!args[1]->IsFunction())
-        {
-            return ThrowException(Exception::TypeError(
-                String::New("Callback function requires as second argument")));
-        }
-
-        Local<String> address = args[0]->ToString();
-        Local<Function> callback = Local<Function>::Cast(args[1]);
-        MotionIO* obj = new MotionIO(address, callback);
-        obj->Wrap(args.This());
-        obj->BeginReceivingMotionUpdates();
-
-        return args.This();
-    }
-    else
+    if (!args.IsConstructCall())
     {
         const int argc = 2;
         Local<Value> argv[argc] = { args[0], args[1] };
 
         return scope.Close(constructor->NewInstance(argc, argv));
     }
+
+    if (args[0]->IsUndefined())
+    {
+         return ThrowException(Exception::TypeError(
+            String::New("Address cannot be undefined")));
+    }
+
+    if (!args[1]->IsFunction())
+    {
+        return ThrowException(Exception::TypeError(
+            String::New("Callback function requires as second argument")));
+    }
+
+    Local<String> address = args[0]->ToString();
+    Local<Function> callback = Local<Function>::Cast(args[1]);
+    MotionIO* obj = new MotionIO(address, callback);
+    obj->Wrap(args.This());
+    obj->BeginReceivingMotionUpdates();
+
+    return args.This();
 }
 
 void RegisterModule(Handle<Object> exports, Handle<Object> module)
