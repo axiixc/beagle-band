@@ -15,6 +15,9 @@
 int write_i2c (int i2c_address, int reg_address, int data);
 
 int main(int argc, char **argv, char **envp) {
+	
+	//setup interrupts
+	
 	int file;
 	const char *filename = "/dev/i2c-1";
 	if((file = open(filename, O_RDWR)) < 0) {
@@ -30,18 +33,23 @@ int main(int argc, char **argv, char **envp) {
 	
 	write_i2c(file, 0x31, 0x03); //0x03 into DATA_FORMAT
 	write_i2c(file, 0x2d, 0x08); //0x08 into POWER_CTL
+	write_i2c(file, 0x2e, 0x02); //0x02 into INT_ENABLE
+	write_i2c(file, 0x38, 0x50); //0x50 into FIFO_CTL
 	
-	char write_buf[1];
-	write_buf[0] = 0x32;
-	if(write(file, write_buf,1) != 1) {
-		printf("Failed to write to the i2c bus.\n");
-	}
+	//loop forever
+		//wait for interrupt
+			char write_buf[1];
+			write_buf[0] = 0x32;
+			if(write(file, write_buf,1) != 1) {
+				printf("Failed to write to the i2c bus.\n");
+			}
 	
-	int reg_num;
-	char read_buf[6];
-	if(read(file, read_buf, 6) != 1) {
-		printf("Failed to read from the i2c bus.\n");
-	}
+			int reg_num;
+			char read_buf[6];
+			if(read(file, read_buf, 6) != 1) {
+				printf("Failed to read from the i2c bus.\n");
+			}
+			//if interrupt still occurring, keep reading
 	
 	for(reg_num = 0; reg_num < 6; reg_num++) {
 		printf("Register %d contains: %x\n", reg_num, read_buf[reg_num]);
