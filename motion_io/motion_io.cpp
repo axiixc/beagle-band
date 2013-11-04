@@ -17,7 +17,7 @@ void MotionIO::RegisterModule(Handle<Object> exports, Handle<Object> module)
 }
 
 MotionIO::MotionIO(Local<String> address, Local<Function> callback)
-: m_address(address)
+: m_address(*v8::String::Utf8Value(address))
 , m_callback(Persistent<Function>::New(callback))
 {
 }
@@ -26,10 +26,19 @@ MotionIO::~MotionIO() {}
 
 void MotionIO::BeginReceivingMotionUpdates()
 {
+    InvokeCallback(m_address);
+}
+
+void MotionIO::StopReceivingMotionUpdates()
+{
+}
+
+void MotionIO::InvokeCallback(std::string data)
+{
     HandleScope scope;
 
     const unsigned argc = 1;
-    Local<Value> argv[argc] = { Local<Value>::New(m_address) };
+    Local<Value> argv[argc] = { String::New(data.c_str()) };
     m_callback->Call(Context::GetCurrent()->Global(), argc, argv);
 }
 
