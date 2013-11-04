@@ -1,6 +1,6 @@
 #include <node.h>
 #include <string>
-#include "motion_io.h"
+#include "MotionIO.h"
 
 using namespace v8;
 
@@ -19,6 +19,7 @@ void MotionIO::RegisterModule(Handle<Object> exports, Handle<Object> module)
 MotionIO::MotionIO(Local<String> address, Local<Function> callback)
 : m_address(*v8::String::Utf8Value(address))
 , m_callback(Persistent<Function>::New(callback))
+, m_eventSource(0)
 {
 }
 
@@ -26,11 +27,16 @@ MotionIO::~MotionIO() {}
 
 void MotionIO::BeginReceivingMotionUpdates()
 {
-    InvokeCallback(m_address);
+
 }
 
 void MotionIO::StopReceivingMotionUpdates()
 {
+    if (!m_eventSource)
+        return;
+
+    delete m_eventSource;
+    m_eventSource = 0;
 }
 
 void MotionIO::InvokeCallback(std::string data)
