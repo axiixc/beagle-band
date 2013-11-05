@@ -15,8 +15,11 @@
 #include "i2cbusses.h"
 
 #define READ_BIT 1
-#define BUTTON_GPIO_PINS {48}
+#define BUTTON_GPIO_PINS {60}
 #define BUTTON_ACTIVE_EDGES {0} 
+
+#define SAMPLING_RATE 0b0011
+#define RANGE 0b00
 
 int write_i2c (int i2c_address, int reg_address, int data);
 
@@ -35,10 +38,11 @@ int main(int argc, char **argv, char **envp) {
 		exit(1);
 	}
 	
-	write_i2c(file, 0x31, 0x03); //0x03 into DATA_FORMAT
-	write_i2c(file, 0x2d, 0x08); //0x08 into POWER_CTL
-	write_i2c(file, 0x2e, 0x02); //0x02 into INT_ENABLE
-	write_i2c(file, 0x38, 0x50); //0x50 into FIFO_CTL
+	write_i2c(file, 0x2c, SAMPLING_RATE); //BW_RATE -- Last 4 bits = sampling rate
+	write_i2c(file, 0x31, 0x20 | RANGE); //DATA_FORMAT -- Last 2 bits = range
+	write_i2c(file, 0x2e, 0x02); //INT_ENABLE
+	write_i2c(file, 0x38, 0x41); //FIFO_CTL
+	write_i2c(file, 0x2d, 0x08); //POWER_CTL
 	
 	int buttons[] = BUTTON_GPIO_PINS;
 	int button_size = sizeof(buttons)/sizeof(buttons[0]);
@@ -79,15 +83,17 @@ int main(int argc, char **argv, char **envp) {
 
 					int reg_num;
 					char read_buf[6];
-					if(read(file, read_buf, 6) != 1) {
+					if(read(file, read_buf, 6) != 6) {
 						printf("Failed to read from the i2c bus.\n");
 					}
 					else {
+						system("clear");
 						for(reg_num = 0; reg_num < 6; reg_num++) {
 							printf("Register %d contains: %x\n", 
 							reg_num, read_buf[reg_num]);
 						}
 					}
+					gpio_get_value(buttons[button], &button_state);
 				}
 			}
 		}	
