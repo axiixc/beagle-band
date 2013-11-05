@@ -11,12 +11,12 @@
 #include <fcntl.h>
 
 #define READ_BIT 1
+#define BUTTON_GPIO_PINS {60}
+#define BUTTON_ACTIVE_EDGES {0} 
 
 int write_i2c (int i2c_address, int reg_address, int data);
 
 int main(int argc, char **argv, char **envp) {
-	
-	//setup interrupts
 	
 	int file;
 	const char *filename = "/dev/i2c-1";
@@ -36,25 +36,59 @@ int main(int argc, char **argv, char **envp) {
 	write_i2c(file, 0x2e, 0x02); //0x02 into INT_ENABLE
 	write_i2c(file, 0x38, 0x50); //0x50 into FIFO_CTL
 	
-	//loop forever
-		//wait for interrupt
-			char write_buf[1];
-			write_buf[0] = 0x32;
-			if(write(file, write_buf,1) != 1) {
-				printf("Failed to write to the i2c bus.\n");
-			}
+	//setup interrupts
+	int buttons[] = BUTTON_GPIO_PINS;
+	int button_size = sizeof(buttons)/sizeof(buttons[0]);
+	int button_active_edges[] = BUTTON_ACTIVE_EDGES;
+	int sensor_addresses[] = SENSOR_ADDRESSES;
 	
-			int reg_num;
-			char read_buf[6];
-			if(read(file, read_buf, 6) != 1) {
-				printf("Failed to read from the i2c bus.\n");
-			}
-			//if interrupt still occurring, keep reading
-	
-	for(reg_num = 0; reg_num < 6; reg_num++) {
-		printf("Register %d contains: %x\n", reg_num, read_buf[reg_num]);
+	struct pollfd fdset[button_size];
+	int nfds = button_size;	
+	int gpio_fd[button_size];
+	for(i = 0; i < button_size; i++)
+	{
+		gpio_export(buttons[i]);
+		gpio_set_dir(buttons[i], "in");
+		gpio_set_edge(buttons[i], button_active_edges[i] ? "rising" : "falling");
+		gpio_fd[i] = gpio_fd_open(buttons[i], O_RDONLY);
 	}
-	
+	while(keepgoing) {
+
+		memset((void*)fdset, 0, sizeof(fdset));
+		for(i = 0; i < button_size; i++) {		
+			fdset[i].fd = gpio_fd[i];
+			fdset[i].events = POLLPRI;
+		}
+		poll(fdset, nfds, 100);
+		for(i = 0; i < button_size; i++) {
+			if(fdset[i].revents & POLLPRI) {
+				char buf[1];
+				read(fdset[i].fd, buf, 1);
+				
+				int button_state;
+				gpio_get_value(buttons[i], &button_state);
+				while(button_state == button_active_edges[i]) {
+					char write_buf[1];
+					write_buf[0] = 0x32;
+					if(write(file, write_buf,1) != 1) {
+						printf("Failed to write to the i2c bus.\n");
+					}
+
+					int reg_num;
+					char read_buf[6];
+					if(read(file, read_buf, 6) != 1) {
+						printf("Failed to read from the i2c bus.\n");
+					}
+					else {
+						for(reg_num = 0; reg_num < 6; reg_num++) {
+							printf("Register %d contains: %x\n", 
+							reg_num, read_buf[reg_num]);
+						}
+					}
+				}
+			}
+		}	
+	}
 }
 
 int write_i2c (int i2c_address, int reg_address, int data) {

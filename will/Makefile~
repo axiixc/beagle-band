@@ -18,4 +18,4 @@ read_accel:	read_accel.o gpio-utils.o
 	$(CC) $(CFLAGS) $(TOOLS_CFLAGS) -c $< -o $@
 
 clean:
-	rm read_accel.o gpio-utils.o
+	rm read_accel.o gpio-utils.o i2c_busses.o
