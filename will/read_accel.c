@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <linux/i2c-dev.h>
+#include "i2c-dev.h"
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -15,7 +15,7 @@
 #include "i2cbusses.h"
 
 #define READ_BIT 1
-#define BUTTON_GPIO_PINS {60}
+#define BUTTON_GPIO_PINS {48}
 #define BUTTON_ACTIVE_EDGES {0} 
 
 int write_i2c (int i2c_address, int reg_address, int data);
@@ -40,7 +40,6 @@ int main(int argc, char **argv, char **envp) {
 	write_i2c(file, 0x2e, 0x02); //0x02 into INT_ENABLE
 	write_i2c(file, 0x38, 0x50); //0x50 into FIFO_CTL
 	
-	//setup interrupts
 	int buttons[] = BUTTON_GPIO_PINS;
 	int button_size = sizeof(buttons)/sizeof(buttons[0]);
 	int button_active_edges[] = BUTTON_ACTIVE_EDGES;
