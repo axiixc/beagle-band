@@ -9,6 +9,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <poll.h>
+
+#include "gpio-utils.h"
+#include "i2cbusses.h"
 
 #define READ_BIT 1
 #define BUTTON_GPIO_PINS {60}
@@ -40,34 +44,34 @@ int main(int argc, char **argv, char **envp) {
 	int buttons[] = BUTTON_GPIO_PINS;
 	int button_size = sizeof(buttons)/sizeof(buttons[0]);
 	int button_active_edges[] = BUTTON_ACTIVE_EDGES;
-	int sensor_addresses[] = SENSOR_ADDRESSES;
 	
 	struct pollfd fdset[button_size];
 	int nfds = button_size;	
 	int gpio_fd[button_size];
-	for(i = 0; i < button_size; i++)
+	int button;
+	for(button = 0; button < button_size; button++)
 	{
-		gpio_export(buttons[i]);
-		gpio_set_dir(buttons[i], "in");
-		gpio_set_edge(buttons[i], button_active_edges[i] ? "rising" : "falling");
-		gpio_fd[i] = gpio_fd_open(buttons[i], O_RDONLY);
+		gpio_export(buttons[button]);
+		gpio_set_dir(buttons[button], "in");
+		gpio_set_edge(buttons[button], button_active_edges[button] ? "rising" : "falling");
+		gpio_fd[button] = gpio_fd_open(buttons[button], O_RDONLY);
 	}
-	while(keepgoing) {
+	while(1) {
 
 		memset((void*)fdset, 0, sizeof(fdset));
-		for(i = 0; i < button_size; i++) {		
-			fdset[i].fd = gpio_fd[i];
-			fdset[i].events = POLLPRI;
+		for(button = 0; button < button_size; button++) {		
+			fdset[button].fd = gpio_fd[button];
+			fdset[button].events = POLLPRI;
 		}
 		poll(fdset, nfds, 100);
-		for(i = 0; i < button_size; i++) {
-			if(fdset[i].revents & POLLPRI) {
+		for(button = 0; button < button_size; button++) {
+			if(fdset[button].revents & POLLPRI) {
 				char buf[1];
-				read(fdset[i].fd, buf, 1);
+				read(fdset[button].fd, buf, 1);
 				
 				int button_state;
-				gpio_get_value(buttons[i], &button_state);
-				while(button_state == button_active_edges[i]) {
+				gpio_get_value(buttons[button], &button_state);
+				while(button_state == button_active_edges[button]) {
 					char write_buf[1];
 					write_buf[0] = 0x32;
 					if(write(file, write_buf,1) != 1) {

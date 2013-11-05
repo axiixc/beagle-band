@@ -6,7 +6,7 @@ TOOLS_CFLAGS	:= -Wstrict-prototypes -Wshadow -Wpointer-arith -Wcast-qual \
 #
 all:	read_accel
 
-read_accel:	read_accel.o gpio-utils.o
+read_accel:	read_accel.o gpio-utils.o i2cbusses.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
 
@@ -18,4 +18,4 @@ read_accel:	read_accel.o gpio-utils.o
 	$(CC) $(CFLAGS) $(TOOLS_CFLAGS) -c $< -o $@
 
 clean:
-	rm read_accel.o gpio-utils.o
+	rm read_accel.o gpio-utils.o i2cbusses.o
