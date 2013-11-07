@@ -21,7 +21,7 @@
 #define SAMPLING_RATE 0b1010
 #define RANGE 0b00
 
-#define QUEUE_LENGTH 100
+#define QUEUE_LENGTH 10
 
 int write_i2c (int i2c_address, int reg_address, int data);
 
@@ -67,7 +67,8 @@ int main(int argc, char **argv, char **envp) {
 	long int previous_z_accumulator = 0;
 	long int z_diff = 0;
 	long int previous_z = 0;
-	long int z_fifo[QUEUE_LENGTH] = {0};
+	long int z_jerk_fifo[QUEUE_LENGTH] = {0};
+	long int z_accel_fifo[QUEUE_LENGTH] = {0};
 	while(1) {
 
 		memset((void*)fdset, 0, sizeof(fdset));
@@ -103,25 +104,34 @@ int main(int argc, char **argv, char **envp) {
 						if( num_samples > 1 ) {
 							z_diff = (z_data - previous_z);
 							z_nooffset += (z_diff - 
-								z_fifo[QUEUE_LENGTH - 1]); 
-							z_accumulator = z_nooffset;
+								z_jerk_fifo[QUEUE_LENGTH - 1]); 
+							z_accumulator = (z_nooffset);
 						}
 							
+						/*if( num_samples % 1 == 0 ) {
+							printf("                          \r");
+							printf("Current vel = %d\r", z_nooffset);
+							fflush(stdout);
+						}*/
 						
 						if( (z_accumulator * previous_z_accumulator) < 0
 							&& abs(z_accumulator - 
 							previous_z_accumulator) > 50 ) {
 							
+							// Put stuff to do on hits here!
 							printf("HIT!\n");
-							printf("Acceleration = %d.\n", z_data);
+							printf("Acceleration = %d.\n", z_nooffset);
+							fflush(stdout);
 						}
 						
 						int index;
 						for( index = QUEUE_LENGTH - 1; 
 							index >= 0; index-- ){
-							z_fifo[index] = z_fifo[index - 1];
+							z_jerk_fifo[index] = z_jerk_fifo[index - 1];
+							z_accel_fifo[index] = z_accel_fifo[index - 1];
 						}
-						z_fifo[0] = z_diff;
+						z_jerk_fifo[0] = z_diff;
+						z_accel_fifo[0] = z_nooffset;
 						previous_z = z_data;
 						previous_z_accumulator = z_accumulator;
 					}
