@@ -110,7 +110,7 @@ int main(int argc, char **argv, char **envp) {
 						
 						if( (z_accumulator * previous_z_accumulator) < 0
 							&& abs(z_accumulator - 
-							previous_z_accumulator) > 50 ) {
+							previous_z_accumulator) > 10 ) {
 							
 							printf("HIT!\n");
 							printf("Acceleration = %d.\n", z_data);
