@@ -1,6 +1,6 @@
 #include <node.h>
 #include <string>
-#include "motion_io.h"
+#include "MotionIO.h"
 
 using namespace v8;
 
@@ -19,6 +19,7 @@ void MotionIO::RegisterModule(Handle<Object> exports, Handle<Object> module)
 MotionIO::MotionIO(Local<String> address, Local<Function> callback)
 : m_address(*v8::String::Utf8Value(address))
 , m_callback(Persistent<Function>::New(callback))
+, m_eventSource(0)
 {
 }
 
@@ -26,11 +27,16 @@ MotionIO::~MotionIO() {}
 
 void MotionIO::BeginReceivingMotionUpdates()
 {
-    InvokeCallback(m_address);
+
 }
 
 void MotionIO::StopReceivingMotionUpdates()
 {
+    if (!m_eventSource)
+        return;
+
+    delete m_eventSource;
+    m_eventSource = 0;
 }
 
 void MotionIO::InvokeCallback(std::string data)
@@ -46,35 +52,33 @@ Handle<Value> MotionIO::New(const Arguments& args)
 {
     HandleScope scope;
 
-    if (args.IsConstructCall())
-    {
-        if (args[0]->IsUndefined())
-        {
-             return ThrowException(Exception::TypeError(
-                String::New("Address cannot be undefined")));
-        }
-
-        if (!args[1]->IsFunction())
-        {
-            return ThrowException(Exception::TypeError(
-                String::New("Callback function requires as second argument")));
-        }
-
-        Local<String> address = args[0]->ToString();
-        Local<Function> callback = Local<Function>::Cast(args[1]);
-        MotionIO* obj = new MotionIO(address, callback);
-        obj->Wrap(args.This());
-        obj->BeginReceivingMotionUpdates();
-
-        return args.This();
-    }
-    else
+    if (!args.IsConstructCall())
     {
         const int argc = 2;
         Local<Value> argv[argc] = { args[0], args[1] };
 
         return scope.Close(constructor->NewInstance(argc, argv));
     }
+
+    if (args[0]->IsUndefined())
+    {
+         return ThrowException(Exception::TypeError(
+            String::New("Address cannot be undefined")));
+    }
+
+    if (!args[1]->IsFunction())
+    {
+        return ThrowException(Exception::TypeError(
+            String::New("Callback function requires as second argument")));
+    }
+
+    Local<String> address = args[0]->ToString();
+    Local<Function> callback = Local<Function>::Cast(args[1]);
+    MotionIO* obj = new MotionIO(address, callback);
+    obj->Wrap(args.This());
+    obj->BeginReceivingMotionUpdates();
+
+    return args.This();
 }
 
 void RegisterModule(Handle<Object> exports, Handle<Object> module)

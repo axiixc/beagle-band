@@ -1,14 +1,17 @@
-#ifndef MOTION_IO_H
-#define MOTION_IO_H
+#ifndef MOTIONIO_H
+#define MOTIONIO_H
 
 #include <node.h>
 #include <string>
+#include "ObservableIO.h"
 
 using namespace v8;
 
-class MotionIO : public node::ObjectWrap {
+class MotionIO : public node::ObjectWrap, IOEventObserver {
 public:
     static void RegisterModule(Handle<Object>, Handle<Object>);
+
+    virtual void IOSourceDidUpdate(IOEventSource&, std::string s) { InvokeCallback(s); }
 
 private:
     explicit MotionIO(Local<String>, Local<Function>);
@@ -24,6 +27,7 @@ private:
 
     std::string m_address;
     Persistent<Function> m_callback;
+    IOEventSource* m_eventSource;
 };
 
-#endif // MOTION_IO_H
+#endif // MOTIONIO_H
