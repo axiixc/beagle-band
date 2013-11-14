@@ -24,7 +24,10 @@ MotionIO::MotionIO(Local<String> address, Local<Function> callback)
 {
 }
 
-MotionIO::~MotionIO() {}
+MotionIO::~MotionIO()
+{
+    m_callback.Dispose();
+}
 
 void MotionIO::BeginReceivingMotionUpdates()
 {
@@ -48,7 +51,7 @@ void MotionIO::InvokeCallback(std::string data)
     HandleScope scope;
 
     const unsigned argc = 1;
-    Local<Value> argv[argc] = { String::New(data.c_str()) };
+    Local<Value> argv[argc] = { Local<Value>::New(String::New(data.c_str())) };
     m_callback->Call(Context::GetCurrent()->Global(), argc, argv);
 }
 
