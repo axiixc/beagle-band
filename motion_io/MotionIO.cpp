@@ -1,19 +1,20 @@
-#include <node.h>
-#include <string>
 #include "MotionIO.h"
+
+#include "Accelerometers/ADXL345.h"
+#include <iostream>
 
 using namespace v8;
 
 Persistent<Function> MotionIO::constructor;
 
-void MotionIO::RegisterModule(Handle<Object> exports, Handle<Object> module)
+void MotionIO::RegisterModule(Handle<Object> exports)
 {
     Local<FunctionTemplate> tpl = FunctionTemplate::New(New);
     tpl->SetClassName(String::NewSymbol("MotionIO"));
     tpl->InstanceTemplate()->SetInternalFieldCount(1);
     constructor = Persistent<Function>::New(tpl->GetFunction());
 
-    module->Set(String::NewSymbol("exports"), constructor);
+    exports->Set(String::NewSymbol("MotionIO"), constructor);
 }
 
 MotionIO::MotionIO(Local<String> address, Local<Function> callback)
@@ -27,7 +28,10 @@ MotionIO::~MotionIO() {}
 
 void MotionIO::BeginReceivingMotionUpdates()
 {
+    if (m_eventSource)
+        return;
 
+    m_eventSource = new ADXL345(this);
 }
 
 void MotionIO::StopReceivingMotionUpdates()
@@ -81,9 +85,9 @@ Handle<Value> MotionIO::New(const Arguments& args)
     return args.This();
 }
 
-void RegisterModule(Handle<Object> exports, Handle<Object> module)
+void RegisterModule(Handle<Object> exports)
 {
-    MotionIO::RegisterModule(exports, module);
+    MotionIO::RegisterModule(exports);
 }
 
 NODE_MODULE(motion_io, MotionIO::RegisterModule);

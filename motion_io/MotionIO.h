@@ -7,9 +7,9 @@
 
 using namespace v8;
 
-class MotionIO : public node::ObjectWrap, IOEventObserver {
+class MotionIO : public node::ObjectWrap, public IOEventObserver {
 public:
-    static void RegisterModule(Handle<Object>, Handle<Object>);
+    static void RegisterModule(Handle<Object>);
 
     virtual void IOSourceDidUpdate(IOEventSource&, std::string s) { InvokeCallback(s); }
 
