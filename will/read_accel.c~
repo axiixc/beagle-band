@@ -18,10 +18,10 @@
 #define BUTTON_GPIO_PINS {60}
 #define BUTTON_ACTIVE_EDGES {0} 
 
-#define SAMPLING_RATE 0b1010
+#define SAMPLING_RATE 0b1111
 #define RANGE 0b00
 
-#define QUEUE_LENGTH 10
+#define QUEUE_LENGTH 30
 
 int write_i2c (int i2c_address, int reg_address, int data);
 
@@ -108,11 +108,11 @@ int main(int argc, char **argv, char **envp) {
 							z_accumulator = (z_nooffset);
 						}
 							
-						if( num_samples % 1 == 0 ) {
+						/*if( num_samples % 1 == 0 ) {
 							printf("                          \r");
 							printf("Current vel = %d\r", z_nooffset);
 							fflush(stdout);
-						}
+						}*/
 						
 						if( (z_accumulator * previous_z_accumulator) < 0
 							&& abs(z_accumulator - 

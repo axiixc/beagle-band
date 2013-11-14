@@ -21,7 +21,7 @@
 #define SAMPLING_RATE 0b1010
 #define RANGE 0b00
 
-#define QUEUE_LENGTH 10
+#define QUEUE_LENGTH 30
 
 int write_i2c (int i2c_address, int reg_address, int data);
 

@@ -26,8 +26,8 @@ private:
 	long int m_accumulator;
 	long int m_prev_accumulator;
 	long int m_previous_data;
-	long int m_accel_fifo[QUEUE_LENGTH] = {0};
-	long int m_vel_fifo[QUEUE_LENGTH] = {0};
+	long int m_accel_fifo[QUEUE_LENGTH] ;
+	long int m_vel_fifo[QUEUE_LENGTH];
 };
 
 void ioThreadMain(void *context);

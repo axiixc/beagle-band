@@ -5,6 +5,7 @@
 #include <functional>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
 
@@ -33,7 +34,12 @@ int write_i2c(int i2c_address, char reg_address, char data)
 
 ADXL345::ADXL345(IOEventObserver* observer)
 : IOEventSource(observer)
+, m_numsamples(0)
+, m_filtered(0)
+, m_accumulator(0)
 {
+	memset(&m_accel_fifo, 0, QUEUE_LENGTH * sizeof(long int));
+	memset(&m_vel_fifo, 0, QUEUE_LENGTH * sizeof(long int));
     if ((m_i2cFile = open(DeviceI2CFilename, O_RDWR)) < 0) {
         perror("Failed to open the i2c bus.\n");
         abort();
@@ -69,18 +75,18 @@ void ADXL345::PollDataReady(uv_poll_t *handle, int status, int events)
 {
 	ADXL345 *eventSource = static_cast<ADXL345*>(handle->data);
 			
-	int button_state;
-	gpio_get_value(60, &button_state);
+	unsigned int button_state;
+	gpio_get_value(BUTTON_NO, &button_state);
 	while(!button_state) {
+		long int diff;
 		char write_buf[1];
 		write_buf[0] = 0x32;
-		if(write(file, write_buf,1) != 1) {
+		if(write(eventSource->m_i2cFile, write_buf,1) != 1) {
 			printf("Failed to write to the i2c bus.\n");
 		}
 
-		int reg_num;
 		signed char read_buf[6];
-		if(read(file, read_buf, 6) != 6) {
+		if(read(eventSource->m_i2cFile, read_buf, 6) != 6) {
 			printf("Failed to read from the i2c bus.\n");
 		}
 		else {
@@ -89,24 +95,24 @@ void ADXL345::PollDataReady(uv_poll_t *handle, int status, int events)
 				
 			eventSource->m_numsamples++;
 			
-			if( num_samples > 1 ) {
-				long int diff = data - eventSource->m_previous_data;
+			if( eventSource->m_numsamples > 1 ) {
+				diff = data - eventSource->m_previous_data;
 				eventSource->m_filtered += (diff - eventSource->m_accel_fifo[QUEUE_LENGTH - 1]); 
 				eventSource->m_accumulator = eventSource->m_filtered;
 			}
 				
-			/*if( num_samples % 1 == 0 ) {
-				printf("                          \r");
-				printf("Current vel = %d\r", z_nooffset);
+			if( (eventSource->m_numsamples) % 100 == 0 ) {
+				//printf("                          \r");
+				printf("Current vel = %ld\n", eventSource->m_accel_fifo[QUEUE_LENGTH - 1]);
 				fflush(stdout);
-			}*/
+			}
 			
 			if( (eventSource->m_accumulator * eventSource->m_prev_accumulator) < 0
 				&& abs(eventSource->m_accumulator -  eventSource->m_prev_accumulator) > 50 ) {
 				
 				// Put stuff to do on hits here!
 				printf("HIT!\n");
-				printf("Acceleration = %d.\n", z_nooffset);
+				printf("Acceleration = %ld.\n", eventSource->m_accumulator);
 				fflush(stdout);
 			}
 			
@@ -115,12 +121,12 @@ void ADXL345::PollDataReady(uv_poll_t *handle, int status, int events)
 				eventSource->m_accel_fifo[index] = eventSource->m_accel_fifo[index - 1];
 				eventSource->m_vel_fifo[index] = eventSource->m_vel_fifo[index - 1];
 			}
-			eventSource->m_accel_fifo[0] = diff;
-			eventSource->m_vel_fifo[0] = eventSource->m_filtered;
+			eventSource->m_accel_fifo[0] = (eventSource->m_numsamples) ? 0 : diff;
+			eventSource->m_vel_fifo[0] = (eventSource->m_numsamples) ? 0 : eventSource->m_filtered;
 			eventSource->m_previous_data = data;
 			eventSource->m_prev_accumulator = eventSource->m_accumulator;
 		}
-		gpio_get_value(60, &button_state);
+		gpio_get_value(BUTTON_NO, &button_state);
 
 	}	
 }
