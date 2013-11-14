@@ -4,9 +4,6 @@
 #include "../ObservableIO.h"
 #include <uv.h>
 
-#define QUEUE_LENGTH 30
-#define BUTTON_NO 60
-
 class ADXL345 : public IOEventSource {
 public:
     ADXL345(IOEventObserver* callback);

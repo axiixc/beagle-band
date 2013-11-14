@@ -70,7 +70,7 @@ void ADXL345::PollDataReady(uv_poll_t *handle, int status, int events)
 	ADXL345 *eventSource = static_cast<ADXL345*>(handle->data);
 			
 	int button_state;
-	gpio_get_value(BUTTON_NO, &button_state);
+	gpio_get_value(60, &button_state);
 	while(!button_state) {
 		char write_buf[1];
 		write_buf[0] = 0x32;
@@ -120,7 +120,7 @@ void ADXL345::PollDataReady(uv_poll_t *handle, int status, int events)
 			eventSource->m_previous_data = data;
 			eventSource->m_prev_accumulator = eventSource->m_accumulator;
 		}
-		gpio_get_value(BUTTON_NO, &button_state);
+		gpio_get_value(60, &button_state);
 
 	}	
 }
