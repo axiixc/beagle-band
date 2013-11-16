@@ -14,6 +14,9 @@ fs.readdirRecursive(CONFIG_PUBLIC_DIRECTORY, true, '').then(function(files) {
 
 server = require('http').createServer(function (req, res) {
     var filePath = url.parse(req.url).pathname || CONFIG_DEFAULT_INDEX
+    if (filePath === '/')
+        filePath = CONFIG_DEFAULT_INDEX
+
     if (publicFiles.indexOf(filePath) < 0) {
         res.writeHead(404)
         res.end('404 Not Found')
